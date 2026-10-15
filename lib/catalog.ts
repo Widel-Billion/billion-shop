@@ -1,4 +1,5 @@
-export type Product = { id: string; name: string; category: string; price: number; oldPrice?: number; image: string; colors: string[]; sizes: string[]; stock: number; published: boolean; description: string; badge?: string };
+import type {Variant} from './inventory';
+export type Product = { id: string; name: string; category: string; price: number; oldPrice?: number; image: string; colors: string[]; sizes: string[]; stock: number; published: boolean; description: string; badge?: string; variants?:Variant[];archivedVariants?:Variant[] };
 export type Settings = { announcement: string; title: string; subtitle: string; hero: string; logo: string; accent: string; rate: number; shipping: number; freeShipping: number; coupon: string; discount: number; categories: string[]; contact: string };
 export const photo=(id:string,w=1100)=>`https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&q=85`;
 export const defaults: Settings = { announcement: 'UN NOUVEAU REGARD SUR VOS ESSENTIELS. DÉCOUVREZ LA COLLECTION.',title:'Le style,\nsans compromis.',subtitle:'Des pièces choisies. Une allure qui vous ressemble.',hero:photo('photo-1483985988355-763728e1935b',2000),logo:'BILLION SHOP',accent:'#C5AA7A',rate:0,shipping:8,freeShipping:150,coupon:'BILLION10',discount:10,categories:['Vêtements','Chaussures','Accessoires','Beauté','Lifestyle'],contact:'' };
@@ -13,7 +14,9 @@ export const seed: Product[] = [
  {id:'veste',name:'Veste L’Essentielle',category:'Vêtements',price:145,image:photo('photo-1591047139829-d91aecb6caea'),colors:['Sable','Noir'],sizes:['S','M','L'],stock:10,published:true,description:'Une silhouette affirmée et des lignes épurées. Produit de démonstration.'}
 ];
 export type CartItem = {id:string;size:string;color:string;qty:number};
-export type Order = {id:string;created:string;owner:string;customer:{name:string;email:string;address:string;city:string;phone:string};items:(CartItem&{name:string;price:number})[];subtotal:number;discount:number;shipping:number;total:number;status:string;payment:string;history:{status:string;date:string}[];tracking?:string;notes?:string};
+export type Order = {id:string;created:string;owner:string;customer:{name:string;email:string;address:string;city:string;phone:string};items:(CartItem&{name:string;price:number})[];subtotal:number;discount:number;shipping:number;total:number;status:string;payment:string;history:{status:string;date:string}[];tracking?:string;notes?:string;stockReleased?:boolean};
 export const statuses=['Nouvelle','Confirmée','En préparation','Expédiée','Livrée','Annulée','Retournée'];
 export function totals(items:{price:number;qty:number}[],settings:Settings,code:string){const subtotal=Math.round(items.reduce((a,i)=>a+i.price*i.qty,0)*100)/100;const valid=!!code&&code.trim().toUpperCase()===settings.coupon.toUpperCase();const discount=valid?Math.round(subtotal*settings.discount)/100:0;const shipping=subtotal===0||subtotal>=settings.freeShipping?0:settings.shipping;return {subtotal,discount,shipping,total:Math.round((subtotal-discount+shipping)*100)/100};}
+
+
 

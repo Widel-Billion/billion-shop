@@ -1,29 +1,35 @@
 import assert from 'node:assert/strict';
 const base='http://127.0.0.1:5173';
-const signin=await fetch(base+'/signin-with-chatgpt?return_to=%2F',{redirect:'manual'});
-const cookie=signin.headers.get('set-cookie')?.split(';')[0]||'';
-async function get(auth=true){const r=await fetch(base+'/api/shop',{headers:auth?{cookie}:{}});const d=await r.json();assert.equal(r.status,200,JSON.stringify(d));return d;}
-async function post(body,auth=true,origin=base){const r=await fetch(base+'/api/shop',{method:'POST',headers:{'content-type':'application/json',origin,...(auth?{cookie}:{})},body:JSON.stringify(body)});const text=await r.text();let data;try{data=JSON.parse(text)}catch{data={error:text}}return {status:r.status,data};}
-const initial=await get();assert.equal(initial.admin,true,'Local ADMIN_EMAIL must be seedy@sites.test');
-const id='qa-'+Date.now(),product={...initial.products[0],id,name:'QA — produit de validation',stock:3,price:50,colors:['Sable','Noir'],sizes:['S','M']};
-assert.equal((await post({action:'product',product},false)).status,403);console.log('PASS unauthorized admin rejected');
-assert.equal((await post({action:'product',product},true,'https://other.example')).status,403);console.log('PASS foreign origin rejected');
-assert.equal((await post({action:'product',product})).status,200);
-assert((await get(false)).products.some(p=>p.id===id));console.log('PASS create product and public catalog');
+const signin=await fetch(base+'/signin-with-chatgpt?return_to=%2F',{redirect:'manual'}),cookie=signin.headers.get('set-cookie')?.split(';')[0]||'';
+async function get(auth=true){const r=await fetch(base+'/api/shop',{headers:auth?{cookie}:{}}),d=await r.json();assert.equal(r.status,200,JSON.stringify(d));return d;}
+async function post(body,auth=true,origin=base){const r=await fetch(base+'/api/shop',{method:'POST',headers:{'content-type':'application/json',origin,...(auth?{cookie}:{})},body:JSON.stringify(body)}),text=await r.text();let data;try{data=JSON.parse(text)}catch{data={error:text}}return {status:r.status,data};}
+const initial=await get();assert.equal(initial.admin,true);
+for(const p of initial.products)assert.equal(p.stock,p.variants.reduce((a,v)=>a+v.stock,0));console.log('PASS backfill preserves active stock totals');
+const id='qa-'+Date.now(),product={...initial.products[0],id,name:'QA — validation des variantes',stock:999,price:50,colors:['Sable','Noir'],sizes:['S','M'],archivedVariants:undefined,variants:[{size:'S',color:'Sable',stock:1,version:0},{size:'S',color:'Noir',stock:0,version:0},{size:'M',color:'Sable',stock:0,version:0},{size:'M',color:'Noir',stock:2,version:0}]};
+assert.equal((await post({action:'product',product},false)).status,403);assert.equal((await post({action:'product',product},true,'https://other.example')).status,403);console.log('PASS admin authorization and origin guards');
+assert.equal((await post({action:'product',product})).status,200);const publicProduct=(await get(false)).products.find(p=>p.id===id);assert.equal(publicProduct.stock,3);console.log('PASS product visible and total derived from variants');
 const customer={name:'Client Test',email:'test@example.test',phone:'0000000000',address:'Adresse de démonstration 01',city:'Ville Test'},items=[{id,size:'M',color:'Noir',qty:2}];
-assert.equal((await post({action:'order',customer,items:[{...items[0],size:'XXL'}]})).status,409);console.log('PASS invalid variant rejected');
-assert.equal((await post({action:'order',customer,items,coupon:'INVALID'})).status,400);console.log('PASS invalid coupon rejected');
-const aggregate=await post({action:'order',customer,items:[{id,size:'S',color:'Sable',qty:2},{id,size:'M',color:'Noir',qty:2}]});assert.equal(aggregate.status,409);assert.equal((await get()).products.find(p=>p.id===id).stock,3);console.log('PASS aggregate stock guard and transaction rollback');
-const checkout=await post({action:'order',customer,items,coupon:initial.settings.coupon});assert.equal(checkout.status,201,JSON.stringify(checkout.data));
-const order=checkout.data.order;assert.equal(order.subtotal,100);assert.equal(order.discount,100*initial.settings.discount/100);assert.equal(order.total,100-order.discount+initial.settings.shipping);assert.match(order.payment,/En attente/);assert.equal(order.items[0].size,'M');assert.equal(order.items[0].color,'Noir');console.log('PASS checkout, coupon, exact variant, pending payment');
-const after=await get();assert.equal(after.products.find(p=>p.id===id).stock,1);assert(after.orders.some(o=>o.id===order.id));console.log('PASS stock decrement and admin order list');
-assert.equal((await post({action:'order',customer,items})).status,409);assert.equal((await get()).products.find(p=>p.id===id).stock,1);console.log('PASS overselling prevented');
+assert.equal((await post({action:'order',customer,items:[{...items[0],size:'XXL'}]})).status,409);
+assert.equal((await post({action:'order',customer,items:[{id,size:'S',color:'Noir',qty:1}]})).status,409);console.log('PASS nonexistent and out-of-stock variants rejected despite positive product total');
+assert.equal((await post({action:'order',customer,items,coupon:'INVALID'})).status,400);
+const aggregate=await post({action:'order',customer,items:[items[0],{...items[0],qty:1}]});assert.equal(aggregate.status,409);assert.equal((await get()).products.find(p=>p.id===id).stock,3);assert.equal((await get()).movements.filter(m=>m.product_id===id&&m.reason==='Commande').length,0);console.log('PASS duplicate variant oversell rolls back stock and audit entries');
+const checkout=await post({action:'order',customer,items,coupon:initial.settings.coupon});assert.equal(checkout.status,201,JSON.stringify(checkout.data));const order=checkout.data.order;
+assert.equal(order.subtotal,100);assert.equal(order.discount,100*initial.settings.discount/100);assert.equal(order.total,100-order.discount+initial.settings.shipping);assert.match(order.payment,/En attente/);assert.equal(order.items[0].size,'M');assert.equal(order.items[0].color,'Noir');console.log('PASS checkout, exact variant, server prices and coupon');
+const after=await get(),p=after.products.find(p=>p.id===id);assert.equal(p.stock,1);assert.equal(p.variants.find(v=>v.size==='M'&&v.color==='Noir').stock,0);assert(after.orders.some(o=>o.id===order.id));
+assert.equal((await post({action:'product',product})).status,409);assert.equal((await get()).products.find(p=>p.id===id).stock,1);console.log('PASS stale administrative edit cannot overwrite a sale');
 assert.equal((await post({action:'status',id:order.id,status:'Confirmée',notes:'Internal QA note',tracking:'TEST-01'})).status,200);
-const updated=await get();assert.equal(updated.orders.find(o=>o.id===order.id).status,'Confirmée');assert.equal(updated.orders.find(o=>o.id===order.id).history.length,2);console.log('PASS order status and history');
-assert.equal((await get(false)).orders.length,0);console.log('PASS anonymous cannot read orders');
-const changed={...initial.settings,subtitle:'Prévisualisation de validation QA'};assert.equal((await post({action:'settings',settings:changed})).status,200);assert.equal((await get(false)).settings.subtitle,changed.subtitle);assert.equal((await post({action:'settings',settings:initial.settings})).status,200);console.log('PASS homepage changes and restoration');
-assert.equal((await post({action:'newsletter',email:'qa@example.test',consent:false})).status,400);assert.equal((await post({action:'newsletter',email:'qa@example.test',consent:true})).status,200);console.log('PASS newsletter consent');
-await post({action:'product',product:{...product,stock:1,published:false}});assert(!(await get(false)).products.some(p=>p.id===id));console.log('PASS archive product');
+assert.equal((await post({action:'status',id:order.id,status:'Livrée'})).status,400);console.log('PASS order transition guard');
+assert.equal((await post({action:'status',id:order.id,status:'Annulée'})).status,200);assert.equal((await get()).products.find(p=>p.id===id).stock,3);
+assert.equal((await post({action:'status',id:order.id,status:'Annulée'})).status,200);assert.equal((await get()).products.find(p=>p.id===id).stock,3);
+assert.equal((await post({action:'status',id:order.id,status:'Confirmée'})).status,400);console.log('PASS cancellation restores stock exactly once and terminal status is protected');
+let latest=(await get()).products.find(p=>p.id===id);latest.variants=latest.variants.map(v=>v.size==='M'&&v.color==='Noir'?{...v,stock:1}:v);assert.equal((await post({action:'product',product:latest})).status,200);
+const simultaneous=await Promise.all([post({action:'order',customer,items:[{...items[0],qty:1}]}),post({action:'order',customer,items:[{...items[0],qty:1}]})]);assert.deepEqual(simultaneous.map(r=>r.status).sort(),[201,409]);const winner=simultaneous.find(r=>r.status===201).data.order;console.log('PASS simultaneous orders compete safely for the last unit');
+latest=(await get()).products.find(p=>p.id===id);latest.sizes=['S'];latest.variants=latest.variants.filter(v=>v.size==='S');assert.equal((await post({action:'product',product:latest})).status,200);
+assert.equal((await post({action:'status',id:winner.id,status:'Annulée'})).status,200);latest=(await get()).products.find(p=>p.id===id);assert.equal(latest.archivedVariants.find(v=>v.size==='M'&&v.color==='Noir').stock,1);assert.equal(latest.stock,1);console.log('PASS restored stock of a retired variant remains visible to admin');
+latest.sizes=['S','M'];latest.variants=[...latest.variants,...latest.archivedVariants];assert.equal((await post({action:'product',product:latest})).status,200);assert.equal((await get()).products.find(p=>p.id===id).stock,2);console.log('PASS retired variant can be reactivated with preserved quantity');
+const returnOrder=await post({action:'order',customer,items:[{id,size:'S',color:'Sable',qty:1}]});assert.equal(returnOrder.status,201);const returnId=returnOrder.data.order.id;for(const status of ['Confirmée','En préparation','Expédiée'])assert.equal((await post({action:'status',id:returnId,status})).status,200);assert.equal((await post({action:'status',id:returnId,status:'Annulée'})).status,400);assert.equal((await post({action:'status',id:returnId,status:'Livrée'})).status,200);assert.equal((await post({action:'status',id:returnId,status:'Retournée'})).status,200);assert.equal((await get()).products.find(p=>p.id===id).stock,2);assert.equal((await post({action:'status',id:returnId,status:'Retournée'})).status,200);assert.equal((await get()).products.find(p=>p.id===id).stock,2);console.log('PASS complete fulfillment and return restore stock once');
+assert.equal((await get(false)).orders.length,0);assert.equal((await get(false)).movements.length,0);assert.equal((await get(false)).products.find(p=>p.id===id).archivedVariants,undefined);console.log('PASS anonymous cannot read orders, movements or retired inventory');
+const changed={...initial.settings,subtitle:'Validation QA variantes'};assert.equal((await post({action:'settings',settings:changed})).status,200);assert.equal((await get(false)).settings.subtitle,changed.subtitle);await post({action:'settings',settings:initial.settings});
+assert.equal((await post({action:'newsletter',email:'qa@example.test',consent:false})).status,400);assert.equal((await post({action:'newsletter',email:'qa@example.test',consent:true})).status,200);console.log('PASS content personalization and newsletter consent');
+latest=(await get()).products.find(p=>p.id===id);assert.equal((await post({action:'product',product:{...latest,published:false}})).status,200);assert(!(await get(false)).products.some(p=>p.id===id));console.log('PASS product archived');
 console.log('ALL API CHECKS PASSED');
-
-

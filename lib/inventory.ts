@@ -1,0 +1,7 @@
+export type Variant = {size:string;color:string;stock:number;version:number};
+export function variantKey(productId:string,size:string,color:string){return JSON.stringify([productId,size,color]);}
+export function distributeStock(sizes:string[],colors:string[],stock:number):Variant[]{const combinations=sizes.flatMap(size=>colors.map(color=>({size,color})));return combinations.map((v,n)=>({...v,stock:Math.floor(stock/combinations.length)+(n<stock%combinations.length?1:0),version:0}));}
+export function variantStock(product:{stock:number;variants?:Variant[]},size:string,color:string){return product.variants?.find(v=>v.size===size&&v.color===color)?.stock??(product.variants?0:product.stock);}
+export function syncVariants(product:{sizes:string[];colors:string[];variants?:Variant[];archivedVariants?:Variant[]}){return product.sizes.filter(Boolean).flatMap(size=>product.colors.filter(Boolean).map(color=>[...(product.variants||[]),...(product.archivedVariants||[])].find(v=>v.size===size&&v.color===color)||{size,color,stock:0,version:0}));}
+export const transitions:Record<string,string[]>={Nouvelle:['Confirmée','Annulée'],Confirmée:['En préparation','Annulée'],'En préparation':['Expédiée','Annulée'],Expédiée:['Livrée'],Livrée:['Retournée'],Annulée:[],Retournée:[]};
+export type StockMovement={id:string;product_id:string;size:string;color:string;delta:number;reason:string;created:string;order_id:string|null};

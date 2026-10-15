@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {filterProducts} from '../lib/catalog-filter.ts';
+const base={id:'one',name:'Chemise Lin',category:'Vêtements',price:50,stock:3,published:true,sizes:['S','M'],colors:['Noir','Écru'],variants:[{size:'S',color:'Noir',stock:0,version:0},{size:'S',color:'Écru',stock:2,version:0},{size:'M',color:'Noir',stock:1,version:0},{size:'M',color:'Écru',stock:0,version:0}],badge:'NOUVEAU'};
+const products=[base,{...base,id:'two',name:'Sac Atelier',category:'Accessoires',price:120,oldPrice:150,badge:undefined},{...base,id:'hidden',published:false}];
+const defaults={category:'Tout',query:'',maxPrice:1000,size:'',color:'',available:false,sort:'new'};
+assert.equal(filterProducts(products,{...defaults,size:'S',color:'Noir',available:true}).length,0);
+assert.equal(filterProducts(products,{...defaults,size:'M',color:'Noir',available:true,category:'Vêtements'}).length,1);
+assert.equal(filterProducts(products,{...defaults,size:'S',color:'Noir'}).length,2);
+assert.deepEqual(filterProducts(products,{...defaults,sort:'desc'}).map(p=>p.id),['two','one']);
+assert.deepEqual(filterProducts(products,{...defaults,category:'Nouveautés'}).map(p=>p.id),['one']);
+assert.deepEqual(filterProducts(products,{...defaults,category:'Promotions'}).map(p=>p.id),['two']);
+assert.deepEqual(filterProducts(products,{...defaults,query:'  CHEMISE ',maxPrice:60}).map(p=>p.id),['one']);
+assert.equal(filterProducts(products,{...defaults,query:'chemise',maxPrice:40}).length,0);
+assert.deepEqual(filterProducts(products,{...defaults,favorites:['two','hidden']}).map(p=>p.id),['two']);
+console.log('PASS combined size/color/stock, category, budget, search, sorting, promotions, arrivals and favorites');

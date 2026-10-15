@@ -38,6 +38,7 @@ Construire puis appliquer les migrations de la base locale, une seule fois et da
 ```sh
 node scripts/run-framework.mjs build
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_slimy_power_man.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_burly_wildside.sql
 node scripts/run-framework.mjs dev
 ```
 
@@ -46,13 +47,13 @@ Ouvrir l’URL locale imprimée (normalement `http://127.0.0.1:5173`). Pour l’
 ## Parcours disponibles
 
 - Accueil éditorial, univers par catégorie, nouveautés et sélection de pièces signatures.
-- Recherche réelle par nom, filtres combinés catégorie/budget/recherche et tris par prix/nom.
+- Recherche réelle par nom, filtres combinés catégorie/budget/taille/couleur/disponibilité et tris par prix/nom. Les critères taille et couleur doivent correspondre à la même variante ; « En stock » vérifie sa quantité. Chargement progressif par lots de 12 cartes.
 - Fiche produit en fenêtre avec description, couleur, taille, quantité, stock et guide de tailles de démonstration.
 - Panier persistant sur l’appareil, quantités, suppression, contrôle du stock et favoris persistants.
 - Coupon de démonstration `BILLION10` (modifiable), sous-total, remise, livraison et total.
 - Commande de test invitée ou connectée ; prix et coupon recalculés côté serveur. Les écritures de stock et de commande sont atomiques dans un batch D1, avec contrainte interdisant le stock négatif.
 - Commandes connectées filtrées par identifiant serveur. Commandes invitées visibles dans la session courante uniquement.
-- Administration : création/modification/masquage d’un produit, tailles/couleurs, image HTTPS, stock total, prix et remise.
+- Administration : création/modification/masquage d’un produit, tailles/couleurs, image HTTPS, stocks indépendants par taille et couleur, prix et remise. Les modifications obsolètes sont refusées pour ne pas écraser une vente concurrente.
 - Administration : recherche de commandes, statuts, notes internes, suivi, historique et export CSV.
 - Personnalisation : logo typographique, annonce, campagne principale, textes, couleur accent, catégories, coordonnées, aperçu avant publication.
 - Réglages : frais et seuil de livraison, coupon, pourcentage et conversion HTG manuelle (désactivée tant que le taux vaut zéro).
@@ -88,7 +89,7 @@ Pour les emails, choisir un fournisseur transactionnel, vérifier le domaine exp
 
 ## Limites à traiter avant exploitation commerciale
 
-- Stock partagé par produit : les tailles/couleurs sont enregistrées exactement, mais les quantités par variante, mouvements, réservations et réapprovisionnement après annulation ne sont pas encore implémentés.
+- Stock par variante livré : réservation atomique, version des stocks, historique des ajustements et réintégration unique à l’annulation ou au retour. La migration répartit automatiquement le stock total restant entre les combinaisons ; vérifiez cette répartition dans l’administration. Une variante retirée reste conservée : un retour peut alimenter son stock retiré, visible dans « Stocks » et réactivable en réintroduisant sa taille/couleur. Les alertes sont visuelles, aucun email automatique n’est envoyé.
 - Fiche en fenêtre : pas encore de page SEO individuelle, galerie multi-images, zoom, vidéo, swipe ni partage produit.
 - Connexion email/mot de passe, vérification d’email, reset, profil, carnet d’adresses, retours et synchronisation des favoris entre appareils restent à créer.
 - Un seul administrateur ; pas de rôles multiples, journal d’activité global, module clients, modération d’avis, retours/remboursements ou factures PDF.
@@ -96,9 +97,9 @@ Pour les emails, choisir un fournisseur transactionnel, vérifier le domaine exp
 - La configuration de campagne est limitée aux champs visibles : pas de constructeur de sections, ordre des blocs, import de médias, carrousel/vidéo, menus personnalisables ou édition complète des pages légales/footer.
 - Pas de calcul de taxes, de zones de livraison, transporteurs, achat réel, remboursement, rapprochement bancaire ni automatisation d’emails.
 - La liste « pièces signatures » est une sélection éditoriale, pas des ventes prétendument réelles. Aucun faux avis n’est affiché.
-- Pas de filtres taille/couleur/marque/disponibilité, pagination, historique de consultation ou statistiques de vente par période.
+- Le filtre marque, l’historique de consultation et les statistiques de vente par période restent à ajouter. Le chargement progressif des cartes est côté navigateur ; le serveur renvoie encore tout le catalogue.
 - Le catalogue est chargé côté client après l’accueil : le SEO de catalogue et le sitemap produits restent à ajouter. Ne pas indexer la démonstration privée.
-- Ajouter avant ouverture publique : quotas et protection contre l’abus, idempotence des commandes, limites de taille des requêtes, validation métier plus fine, tests de concurrence et paiement, sauvegardes/restauration, politique de conservation et suppression des données.
+- Ajouter avant ouverture publique : quotas et protection contre l’abus, idempotence des commandes, limites de taille des requêtes, validation métier plus fine, tests de paiement et tests de charge, sauvegardes/restauration, politique de conservation et suppression des données.
 - Les photos Unsplash sont des illustrations de démonstration, pas une certification des articles livrés. Remplacer les photos et vérifier les droits liés à la marque, aux produits et aux personnes pour le catalogue réel.
 
 ## Vérifications
@@ -106,7 +107,12 @@ Pour les emails, choisir un fournisseur transactionnel, vérifier le domaine exp
 ```sh
 node node_modules/typescript/bin/tsc --noEmit
 node scripts/verify-shop.mjs
+node scripts/verify-filters.mjs
 node scripts/run-framework.mjs build
 ```
 
 Le script d’intégration cible uniquement le serveur local sur 127.0.0.1:5173. Il crée un produit QA, une commande et une inscription de test dans la base locale, masque le produit à la fin et restaure les réglages. Il ne doit pas être utilisé avec des données commerciales. Voir `TESTS.md` pour les résultats et les limites de vérification.
+
+## Évolution : stocks par variante
+
+Les modules lib/shop-db.ts, lib/inventory.ts et lib/catalog-filter.ts regroupent désormais la persistance, les règles de stock et les filtres. La migration 0001 ajoute inventory et stock_movements sans modifier les migrations déjà appliquées. Les commandes suivent les transitions Nouvelle → Confirmée → En préparation → Expédiée → Livrée ; Annulée est possible avant expédition, Retournée après livraison. Un second enregistrement du même statut ne réintègre pas le stock une seconde fois. Les états de paiement restent séparés.
