@@ -254,3 +254,36 @@ footer{background:#0b0714;color:#f9f0ff}
  .product-photo{aspect-ratio:4/5}
  .admin-sidebar{background:#160c25}
 }
+/* Editorial entrance approved from the first mobile proposal. */
+.header>.wordmark{font-family:Georgia,'Times New Roman',serif;font-size:25px;font-weight:400;letter-spacing:3px;text-align:center;color:#fff}
+.header>.wordmark b{font-weight:400;color:inherit}
+.header>.wordmark span{font-size:7px;letter-spacing:3.5px;border-top:1px solid #b332a5;margin:8px 0 0;padding-top:7px;color:#d8bde7}
+.mobile-home-actions{padding:0;gap:0;border-top:1px solid #ba299f;border-bottom:1px solid #ba299f;background:#10091d}
+.mobile-home-actions button,.mobile-home-actions button:first-child{border:0;border-radius:0;background:transparent;color:#f9edff;font-weight:400;letter-spacing:2px;min-height:58px;box-shadow:none}
+.mobile-home-actions button+button{border-left:1px solid #ba299f}
+.mobile-home-actions button:hover{background:#32103e}
+.hero.neon-campaign{height:700px;min-height:0;max-height:none;background:#10091d}
+.neon-campaign .hero-campaign-art{inset:0;width:100%;height:100%}
+.neon-campaign .hero-shade{background:linear-gradient(180deg,transparent 45%,rgba(12,5,23,.22) 60%,rgba(12,5,23,.92) 100%)}
+.neon-campaign .hero-content{left:6%;right:6%;top:auto;bottom:45px;max-width:none;text-align:center}
+.neon-campaign .hero-content>.eyebrow,.neon-campaign .hero-subtitle,.neon-campaign .hero-footer,.neon-campaign .hero-side{display:none}
+.neon-campaign h1,.neon-campaign h1>span:nth-child(2){font-family:Georgia,'Times New Roman',serif;font-weight:400;font-style:normal;font-size:clamp(44px,5.3vw,76px);line-height:1.12;letter-spacing:.1px;color:#fff;background:none;-webkit-text-fill-color:#fff;text-shadow:0 2px 24px #12071a55;margin:0}
+.mobile-home-intro{display:block;padding:48px 6%;background:#170c28;text-align:center}
+.mobile-home-intro p{font-family:Georgia,'Times New Roman',serif;font-size:clamp(24px,2.5vw,34px);color:#d7b8eb;line-height:1.5;max-width:760px;margin:auto;text-wrap:balance}
+@media(max-width:760px){
+ .header{height:94px;grid-template-columns:1fr auto 1fr;padding:0 12px;gap:4px}
+ .header>.wordmark{font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:clamp(17px,4.7vw,24px);letter-spacing:1.3px;margin:0}
+ .header>.wordmark span{font-size:6px;letter-spacing:2px;padding-top:6px;margin-top:6px}
+ .header>.mobile-menu{width:38px;padding:7px}
+ .header-actions .account-icon{display:inline-flex}
+ .nav.open{top:94px}
+ .mobile-home-actions{padding:0;gap:0}
+ .mobile-home-actions button{min-height:56px;font-size:10px;letter-spacing:1.7px}
+ .hero.neon-campaign{height:119vw;min-height:420px;max-height:720px}
+ .neon-campaign .hero-campaign-art{top:0;bottom:auto;right:0;left:0;width:100%;height:77%}
+ .neon-campaign .hero-shade{background:linear-gradient(180deg,transparent 50%,rgba(16,9,29,.05) 64%,#10091d 81%)}
+ .neon-campaign .hero-content{left:5%;right:5%;bottom:25px;top:auto;max-width:none}
+ .neon-campaign h1,.neon-campaign h1>span:nth-child(2){font-size:clamp(32px,9.7vw,55px);line-height:1.13;letter-spacing:0;font-weight:400}
+ .mobile-home-intro{padding:32px 7% 36px}
+ .mobile-home-intro p{font-size:clamp(21px,5.7vw,30px);line-height:1.5}
+}
