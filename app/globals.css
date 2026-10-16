@@ -10,3 +10,34 @@
 
 /* Keep the account heading readable independently of editorial title spacing. */
 .account-page .account-orders-heading{letter-spacing:0;word-spacing:.12em;line-height:1.4;margin-bottom:24px}
+
+/* Mobile editorial entrance: centered identity, direct account access, immersive image. */
+.mobile-home-actions,.mobile-home-intro{display:none}
+@media(max-width:760px){
+  .announcement{display:none}
+  .header{height:90px;padding:0 16px;display:grid;grid-template-columns:1fr auto 1fr;gap:6px}
+  .header>.mobile-menu{justify-self:start;width:44px;height:44px;padding:10px;color:#837c69}
+  .header>.wordmark{justify-self:center;margin:0;text-align:center;font-family:Georgia,'Times New Roman',serif;font-size:clamp(17px,4.7vw,24px);font-weight:400;letter-spacing:1.2px;line-height:1.2}
+  .header>.wordmark span{font-size:6px;letter-spacing:2.5px;border-top:1px solid #bdb7a9;padding-top:6px;margin:5px 0 0}
+  .header-actions{justify-self:end;gap:0}
+  .header-actions>.icon:first-child,.header-actions .heart-icon{display:none}
+  .header-actions .account-icon{display:inline-flex}
+  .header-actions>.icon{width:36px;height:44px;min-width:36px;padding:7px;justify-content:center;align-items:center}
+  .header-actions svg{width:20px;height:20px}
+  .header-actions .bag{gap:2px}
+  .header-actions .bag>span{font-size:9px}
+  .nav.open{top:90px}
+  .mobile-home-actions{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #deddd8;background:#fff}
+  .mobile-home-actions button{min-height:58px;padding:16px 8px;font-size:12px;letter-spacing:1.1px}
+  .mobile-home-actions button+button{border-left:1px solid #deddd8}
+  .hero{height:116vw;min-height:420px;max-height:680px}
+  .hero-image{object-position:62% center;filter:brightness(.88)}
+  .hero-shade{background:linear-gradient(180deg,rgba(0,0,0,.06) 25%,rgba(0,0,0,.12) 50%,rgba(0,0,0,.67) 100%)}
+  .hero-content{left:6%;right:6%;top:auto;bottom:44px;max-width:none;text-align:center}
+  .hero-content>.eyebrow,.hero-subtitle,.hero-footer,.hero-side{display:none}
+  .hero h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(31px,8.5vw,54px);font-weight:400;line-height:1.14;letter-spacing:.2px;text-wrap:balance}
+  .hero h1>span:nth-child(2){font-family:inherit;font-style:normal;letter-spacing:inherit;font-weight:400}
+  .mobile-home-intro{display:block;padding:48px 7% 44px;background:#fff;text-align:center}
+  .mobile-home-intro p{font-size:clamp(20px,5.6vw,29px);line-height:1.45;color:#444;font-weight:400;text-wrap:balance}
+  .categories-section{padding-top:20px}
+}
