@@ -1,5 +1,5 @@
 import {env} from 'cloudflare:workers';
-import {seed,defaults,type Product,type Settings,type Order} from './catalog';
+import {seed,defaults,currentCampaign,type Product,type Settings,type Order} from './catalog';
 import {distributeStock,variantKey,type Variant} from './inventory';
 export class ShopError extends Error {constructor(message:string,public status=409){super(message);}}
 type InventoryRow={id:string;product_id:string;size:string;color:string;stock:number;version:number;active:number};
@@ -12,7 +12,7 @@ export async function database(){
  for(const row of missing.results){const p:Product=JSON.parse(row.data);await db.batch(distributeStock(p.sizes,p.colors,row.stock).map(v=>db.prepare('INSERT OR IGNORE INTO inventory(id,product_id,size,color,stock,version,active) VALUES(?,?,?,?,?,0,1)').bind(variantKey(p.id,v.size,v.color),p.id,v.size,v.color,v.stock)));}
  return db;
 }
-export async function getSettings(db:D1Database):Promise<Settings>{const row=await db.prepare("SELECT data FROM records WHERE id='settings'").first<{data:string}>();return row?JSON.parse(row.data):defaults;}
+export async function getSettings(db:D1Database):Promise<Settings>{const row=await db.prepare("SELECT data FROM records WHERE id='settings'").first<{data:string}>();return currentCampaign(row?JSON.parse(row.data):defaults);}
 export async function getProducts(db:D1Database):Promise<Product[]>{
  const [rows,inventory]=await Promise.all([db.prepare('SELECT id,data FROM products').all<{id:string;data:string}>(),db.prepare('SELECT * FROM inventory').all<InventoryRow>()]);
  return rows.results.map(r=>{const variants=inventory.results.filter(v=>v.product_id===r.id&&v.active===1).map(({size,color,stock,version})=>({size,color,stock,version}));return {...JSON.parse(r.data),stock:variants.reduce((a,v)=>a+v.stock,0),variants,archivedVariants:inventory.results.filter(v=>v.product_id===r.id&&v.active===0).map(({size,color,stock,version})=>({size,color,stock,version}))};});

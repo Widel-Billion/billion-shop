@@ -43,3 +43,53 @@
 }
 
 .section-return{padding:8px 5%;background:#fff}.section-return button{position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;border:0;border-radius:50%}.section-return button::before{content:'';position:absolute;inset:4px;border:1px solid #deddd8;border-radius:50%;pointer-events:none}.section-return button:hover::before{background:var(--paper)}.section-return button svg{position:relative;z-index:1}
+
+/* Palette drawn from the owner's neon sneaker campaign. */
+:root{--ink:#191326;--paper:#f7f2fa;--accent:#a023b5;--neon-pink:#d8339e;--neon-teal:#087f88;--night:#100b21}
+body{color:var(--ink)}
+.announcement{background:var(--night);border-bottom:2px solid var(--neon-pink)}
+.header{border-bottom-color:#e9ddee}
+.wordmark,.header-actions,.nav button.active{color:#351644}
+.nav button:hover,.text-link:hover{color:#962190}
+.nav button.active:after{background:var(--neon-pink)}
+.button:not(.light):not(.outline){background:#67207d;border-color:#67207d;color:#fff}
+.button:not(.light):not(.outline):hover{background:#851f94}
+.badge{background:#f9e5f4;color:#711862}
+.favorite.liked{color:#b71d83}
+.category-index,.status{background:#ede2f3;color:#4e1c62}
+.editorial-copy,.manifesto{background:#f5eff8}
+.editorial-copy .eyebrow,.manifesto em{color:#862b91}
+.section-heading h2>span{color:#bc298f}
+.newsletter{background:linear-gradient(120deg,#f7effa,#edf8f8);border-color:#e4d8ec}
+.newsletter-input{border-color:#8c3299}
+.newsletter h2{color:#4d205f}
+footer{background:#100b21;color:#f6f0fa}
+.footer-top,.footer-bottom{border-color:#37253f}
+.footer-top h4{color:#e6bde9}
+.footer-top>div>button:not(.wordmark),.footer-brand>p,.footer-bottom{color:#c4b6ce}
+.footer-top .wordmark{color:#fff}
+.section-return button::before{border-color:#dcc6e6}
+.section-return button{color:#67207d}
+.mobile-home-actions button{color:#59216e}
+.mobile-home-actions button+button{border-left-color:#e9ddee}
+.mobile-home-intro{background:#f7f2fa}
+.mobile-home-intro p{color:#58276b}
+.neon-campaign{background:#100b21}
+.hero-campaign-art{position:absolute;right:0;top:0;width:67%;height:100%;overflow:hidden}
+.neon-campaign .hero-shade{background:linear-gradient(90deg,#100b21 12%,rgba(16,11,33,.94) 28%,rgba(16,11,33,.12) 58%,transparent 80%);pointer-events:none}
+.neon-campaign .hero-content{left:6%;max-width:49%;top:24%}
+.neon-campaign h1{font-size:clamp(48px,5.1vw,78px)}
+.neon-campaign h1>span:nth-child(2){color:#f4b1df}
+.neon-campaign .hero-subtitle{max-width:330px;color:#ded0e6}
+.neon-campaign .eyebrow{color:#7ee1df}
+.neon-campaign .hero-side{display:none}
+@media(max-width:760px){
+ .header>.mobile-menu{color:#67207d}
+ .header>.wordmark span{border-top-color:#c7b3d2}
+ .neon-campaign{height:120vw;min-height:420px;max-height:650px}
+ .hero-campaign-art{width:100%;height:76%;top:0;right:0}
+ .neon-campaign .hero-shade{background:linear-gradient(180deg,transparent 50%,rgba(16,11,33,.18) 65%,#100b21 83%)}
+ .neon-campaign .hero-content{left:6%;right:6%;top:auto;bottom:28px;max-width:none}
+ .neon-campaign h1{font-size:clamp(31px,8.5vw,48px);line-height:1.15}
+ .neon-campaign h1>span:nth-child(2){color:#f4b1df}
+}
