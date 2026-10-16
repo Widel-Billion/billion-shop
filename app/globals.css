@@ -41,3 +41,5 @@
   .mobile-home-intro p{font-size:clamp(20px,5.6vw,29px);line-height:1.45;color:#444;font-weight:400;text-wrap:balance}
   .categories-section{padding-top:20px}
 }
+
+.section-return{padding:18px 5%;border-bottom:1px solid #eee;background:#fff}.section-return button{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:8px 12px;font-size:13px;border:1px solid #deddd8}.section-return button:hover{background:var(--paper)}@media(max-width:760px){.section-return{padding:12px 5%}.section-return button{font-size:12px}}
