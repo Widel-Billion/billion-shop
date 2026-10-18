@@ -287,3 +287,9 @@ footer{background:#0b0714;color:#f9f0ff}
  .mobile-home-intro{padding:32px 7% 36px}
  .mobile-home-intro p{font-size:clamp(21px,5.7vw,30px);line-height:1.5}
 }
+
+/* Administration chrome is independent from the customer storefront. */
+.admin-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 4%;background:#160c25;border-bottom:1px solid #492456;position:sticky;top:0;z-index:30}
+.admin-topbar-brand{display:flex;flex-direction:column;gap:5px}.admin-topbar-brand>span{font-family:Manrope,Arial,sans-serif;font-size:18px;font-weight:800;letter-spacing:.5px;color:#fff}.admin-topbar-brand small{font-size:11px;color:#ccb3dc}
+.admin-preview-link{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border:1px solid #a54bb4;border-radius:7px;background:#2d113d;color:#f8edff;font-size:12px}.admin-preview-link:hover{background:#461449;border-color:#ff69c5}.admin-preview-link:focus-visible{outline:2px solid #50e5df;outline-offset:4px}
+@media(max-width:760px){.admin-topbar{padding:12px 5%;gap:12px}.admin-topbar-brand>span{font-size:15px}.admin-preview-link{padding:9px 11px;font-size:11px;gap:5px}.admin-topbar-brand small{font-size:10px}}
