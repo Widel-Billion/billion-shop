@@ -7,6 +7,10 @@ export async function database(){
  const db=env.DB;if(!db)throw new ShopError('Base indisponible.',503);
  await db.batch(seed.map(p=>db.prepare('INSERT OR IGNORE INTO products(id,data,stock) VALUES(?,?,?)').bind(p.id,JSON.stringify(p),p.stock)));
  await db.prepare("UPDATE products SET data=json_set(data,'$.image',?) WHERE id='veste' AND json_extract(data,'$.image')=?").bind(seed.find(p=>p.id==='veste')!.image,'https://images.unsplash.com/photo-1548624149-f322eea883ca?auto=format&fit=crop&w=1100&q=85').run();
+ // One-time demo price reset to gourdes, guarded inside the same atomic batch.
+ await db.batch([
+ db.prepare("UPDATE products SET data=CASE WHEN json_extract(data,'$.oldPrice') IS NOT NULL THEN json_set(data,'$.price',round(json_extract(data,'$.price')*100,2),'$.oldPrice',round(json_extract(data,'$.oldPrice')*100,2)) ELSE json_set(data,'$.price',round(json_extract(data,'$.price')*100,2)) END WHERE NOT EXISTS(SELECT 1 FROM records WHERE id='catalog-gourdes-v1')"),
+ db.prepare("INSERT OR IGNORE INTO records(id,kind,owner,data) VALUES('catalog-gourdes-v1','migration','system','{}')")]);
  // Backfill idempotent du catalogue existant, en conservant la quantité totale restante.
  const missing=await db.prepare('SELECT id,data,stock FROM products p WHERE NOT EXISTS(SELECT 1 FROM inventory i WHERE i.product_id=p.id)').all<{id:string;data:string;stock:number}>();
  for(const row of missing.results){const p:Product=JSON.parse(row.data);await db.batch(distributeStock(p.sizes,p.colors,row.stock).map(v=>db.prepare('INSERT OR IGNORE INTO inventory(id,product_id,size,color,stock,version,active) VALUES(?,?,?,?,?,0,1)').bind(variantKey(p.id,v.size,v.color),p.id,v.size,v.color,v.stock)));}
@@ -15,12 +19,13 @@ export async function database(){
 export async function getSettings(db:D1Database):Promise<Settings>{const row=await db.prepare("SELECT data FROM records WHERE id='settings'").first<{data:string}>();return currentCampaign(row?JSON.parse(row.data):defaults);}
 export async function getProducts(db:D1Database):Promise<Product[]>{
  const [rows,inventory]=await Promise.all([db.prepare('SELECT id,data FROM products').all<{id:string;data:string}>(),db.prepare('SELECT * FROM inventory').all<InventoryRow>()]);
- return rows.results.map(r=>{const variants=inventory.results.filter(v=>v.product_id===r.id&&v.active===1).map(({size,color,stock,version})=>({size,color,stock,version}));return {...JSON.parse(r.data),stock:variants.reduce((a,v)=>a+v.stock,0),variants,archivedVariants:inventory.results.filter(v=>v.product_id===r.id&&v.active===0).map(({size,color,stock,version})=>({size,color,stock,version}))};});
+ return rows.results.filter(r=>!JSON.parse(r.data).deleted).map(r=>{const variants=inventory.results.filter(v=>v.product_id===r.id&&v.active===1).map(({size,color,stock,version})=>({size,color,stock,version}));return {...JSON.parse(r.data),stock:variants.reduce((a,v)=>a+v.stock,0),variants,archivedVariants:inventory.results.filter(v=>v.product_id===r.id&&v.active===0).map(({size,color,stock,version})=>({size,color,stock,version}))};});
 }
 export function saveRecord(db:D1Database,id:string,kind:string,owner:string,data:unknown){return db.prepare('INSERT INTO records(id,kind,owner,data) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data').bind(id,kind,owner,JSON.stringify(data));}
 export function stockTotal(db:D1Database,id:string){return db.prepare('UPDATE products SET stock=(SELECT COALESCE(SUM(stock),0) FROM inventory WHERE product_id=? AND active=1) WHERE id=?').bind(id,id);}
 export function movement(db:D1Database,id:string,delta:number,reason:string,actor:string,orderId:string|null=null){return db.prepare('INSERT INTO stock_movements(id,variant_id,delta,reason,created,actor,order_id) VALUES(?,?,?,?,?,?,?)').bind(crypto.randomUUID(),id,delta,reason,new Date().toISOString(),actor,orderId);}
 export async function saveProduct(db:D1Database,p:Product,actor:string){
+ const removedProduct=await db.prepare("SELECT json_extract(data,'$.deleted') AS deleted FROM products WHERE id=?").bind(p.id).first<{deleted:number}>();if(removedProduct?.deleted)throw new ShopError('Ce produit a été supprimé.',404);
  const existing=await db.prepare('SELECT * FROM inventory WHERE product_id=?').bind(p.id).all<InventoryRow>();
  if(existing.results.some(v=>v.active)&&!p.variants)throw new ShopError('Rechargez le produit avant de modifier les stocks.');
  const variants=p.variants||distributeStock(p.sizes,p.colors,p.stock);

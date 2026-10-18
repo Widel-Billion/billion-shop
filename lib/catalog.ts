@@ -16,9 +16,9 @@ export const seed: Product[] = [
  {id:'veste',name:'Veste L’Essentielle',category:'Vêtements',price:145,image:photo('photo-1591047139829-d91aecb6caea'),colors:['Sable','Noir'],sizes:['S','M','L'],stock:10,published:true,description:'Une silhouette affirmée et des lignes épurées. Produit de démonstration.'}
 ];
 export type CartItem = {id:string;size:string;color:string;qty:number};
-export type Order = {id:string;created:string;owner:string;customer:{name:string;email:string;address:string;city:string;phone:string};items:(CartItem&{name:string;price:number})[];subtotal:number;discount:number;shipping:number;total:number;status:string;payment:string;history:{status:string;date:string}[];tracking?:string;notes?:string;stockReleased?:boolean};
+export type Order = {id:string;created:string;owner:string;customer:{name:string;email:string;address:string;city:string;phone:string};items:(CartItem&{name:string;price:number})[];subtotal:number;discount:number;shipping:number;total:number;status:string;payment:string;history:{status:string;date:string}[];tracking?:string;notes?:string;stockReleased?:boolean;currency?:'USD'|'HTG';paidAt?:string};
 export const statuses=['Nouvelle','Confirmée','En préparation','Expédiée','Livrée','Annulée','Retournée'];
-export function totals(items:{price:number;qty:number}[],settings:Settings,code:string){const subtotal=Math.round(items.reduce((a,i)=>a+i.price*i.qty,0)*100)/100;const valid=!!code&&code.trim().toUpperCase()===settings.coupon.toUpperCase();const discount=valid?Math.round(subtotal*settings.discount)/100:0;const shipping=subtotal===0||subtotal>=settings.freeShipping?0:settings.shipping;return {subtotal,discount,shipping,total:Math.round((subtotal-discount+shipping)*100)/100};}
+export function totals(items:{price:number;qty:number}[],settings:Settings,code:string){const subtotal=Math.round(items.reduce((a,i)=>a+i.price*i.qty,0)*100)/100;const valid=!!code&&code.trim().toUpperCase()===settings.coupon.toUpperCase();const discount=valid?Math.round(subtotal*settings.discount)/100:0;const shipping=0;return {subtotal,discount,shipping,total:Math.round((subtotal-discount+shipping)*100)/100};}
 
 
 

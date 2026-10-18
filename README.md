@@ -1,5 +1,14 @@
 # Billion Shop
 
+## Gestion, gourdes et retrait sur place
+
+La boutique utilise désormais HTG pour les nouveaux prix et commandes. Une remise à niveau unique fixe des prix de démonstration en gourdes ; il ne s’agit pas d’un taux de change. Les anciennes commandes conservent leur devise USD et sont exclues des totaux HTG. Le retrait sur place est gratuit, avec règlement lors du retrait et aucun paiement bancaire en ligne. Les états Prête pour retrait et Retirée sont disponibles ; la case de confirmation d’encaissement est validée côté serveur uniquement au retrait. Le tableau de bord affiche ces encaissements, hors annulations et retours, avec graphique et calendrier par jour/semaine/mois à l’heure d’Haïti. Il ne calcule pas un bénéfice net.
+
+Les produits peuvent être affichés, masqués ou supprimés du catalogue (l’historique des commandes et des mouvements est conservé). Les stocks sont présentés sous forme de fiches. Le panier dispose de Vider le panier. L’administration reste séparée du site public, avec menu mobile et accès retour réservé à l’administrateur.
+
+Vérification dédiée locale : `node scripts/verify-pickup.mjs`. Ne pas exécuter ce script contre une base commerciale. Les sections historiques plus bas décrivent aussi les étapes antérieures du projet ; la présente section décrit le fonctionnement courant de la monnaie, du retrait et du tableau de bord.
+
+
 Boutique éditoriale responsive avec catalogue, panier et administration reliés à une base persistante. Cette livraison est une **version de démonstration fonctionnelle**, pas une boutique ouverte aux ventes réelles. Tous les produits et commandes sont des exemples. Aucun paiement réel n’est accepté.
 
 ## Architecture livrée
