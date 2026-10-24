@@ -1,4 +1,6 @@
 import {env} from 'cloudflare:workers';
+import {admin,identity} from '@/lib/shop-auth';
+import {imagePathPattern} from '@/lib/product-images';
 import {z} from 'zod';
 import {totals,type Order} from '@/lib/catalog';
 import {transitions,variantStock} from '@/lib/inventory';
@@ -7,12 +9,10 @@ export const dynamic='force-dynamic';
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store'}});
 const option=z.string().trim().min(1).max(50);
 const options=z.array(option).min(1).max(30).refine(values=>new Set(values).size===values.length,'Options dupliquées');
-const productSchema=z.object({id:z.string().min(1).max(100),name:z.string().trim().min(1).max(150),category:option,price:z.number().min(0).max(100000),oldPrice:z.number().min(0).optional(),image:z.string().url().refine(v=>v.startsWith('https://')),colors:options,sizes:options,stock:z.number().int().min(0),published:z.boolean(),description:z.string().max(5000),badge:z.string().max(30).optional(),variants:z.array(z.object({size:option,color:option,stock:z.number().int().min(0).max(100000),version:z.number().int().min(0)})).min(1).max(300).optional()});
+const productSchema=z.object({id:z.string().min(1).max(100),name:z.string().trim().min(1).max(150),category:option,price:z.number().min(0).max(100000),oldPrice:z.number().min(0).optional(),image:z.union([z.string().url().refine(v=>v.startsWith('https://')),z.string().regex(imagePathPattern)]),colors:options,sizes:options,stock:z.number().int().min(0),published:z.boolean(),description:z.string().max(5000),badge:z.string().max(30).optional(),variants:z.array(z.object({size:option,color:option,stock:z.number().int().min(0).max(100000),version:z.number().int().min(0)})).min(1).max(300).optional()});
 const settingsSchema=z.object({announcement:z.string().max(300),title:z.string().min(1).max(100),subtitle:z.string().max(300),hero:z.union([z.enum(['/images/billion-neon-sneakers-source.jpeg','/images/billion-editorial-first.png']),z.string().url().refine(v=>v.startsWith('https://'))]),logo:z.string().min(1).max(50),accent:z.string().regex(/^#[0-9a-f]{6}$/i),rate:z.number().min(0).max(10000),shipping:z.number().min(0),freeShipping:z.number().min(0),coupon:z.string().min(1).max(30),discount:z.number().min(0).max(100),categories:options,contact:z.string().max(200)});
 const orderSchema=z.object({customer:z.object({name:z.string().trim().min(2).max(100),email:z.string().email().max(200),address:z.string().trim().min(5).max(300).default('Retrait sur place'),city:z.string().trim().min(2).max(100).default('Retrait sur place'),phone:z.string().min(6).max(30)}),items:z.array(z.object({id:z.string().max(100),size:option,color:option,qty:z.number().int().min(1).max(99)})).min(1).max(50),coupon:z.string().max(30).default('')});
 const statusSchema=z.object({id:z.string().max(100),status:z.string(),tracking:z.string().max(300).default(''),notes:z.string().max(2000).default(''),paid:z.boolean().optional()});
-function identity(r:Request){return r.headers.get('oai-authenticated-user-id')||'';}
-function admin(r:Request){const email=(env as unknown as Record<string,string>).ADMIN_EMAIL;return !!identity(r)&&!!email&&r.headers.get('oai-authenticated-user-email')===email;}
 function fail(e:unknown){if(e instanceof z.ZodError)return json({error:'Veuillez vérifier les champs du formulaire et les variantes.'},400);if(e instanceof ShopError)return json({error:e.message},e.status);return json({error:'Le stock ou la commande a changé. Rechargez les données avant de réessayer.'},409);}
 export async function GET(r:Request){
  try{const db=await database(),isAdmin=admin(r),owner=identity(r);
@@ -35,7 +35,7 @@ export async function POST(r:Request){
    else await db.prepare("UPDATE products SET data=json_set(data,'$.published',json(?)) WHERE id=?").bind(JSON.stringify(z.boolean().parse(b.published)),id).run();
    return json({ok:true});
   }
-  if(b.action==='product'){await saveProduct(db,productSchema.parse(b.product),owner);return json({ok:true});}
+  if(b.action==='product'){const product=productSchema.parse(b.product);if(product.image.startsWith('/api/product-images/')){const key=product.image.slice('/api/product-images/'.length);if(!env.BUCKET||!await env.BUCKET.head('products/'+key))return json({error:'La photo est introuvable. Importez-la à nouveau.'},400);}await saveProduct(db,product,owner);return json({ok:true});}
   if(b.action==='settings'){await saveRecord(db,'settings','settings','admin',settingsSchema.parse(b.settings)).run();return json({ok:true});}
   if(b.action==='status'){
    const input=statusSchema.parse(b),row=await db.prepare("SELECT data FROM records WHERE id=? AND kind='order'").bind(input.id).first<{data:string}>();

@@ -316,3 +316,19 @@ footer{background:#0b0714;color:#f9f0ff}
 .sales-dashboard h2{margin-bottom:5px}.sales-date{display:flex;align-items:center;gap:8px}.sales-date input{max-width:170px}.sales-periods{display:flex;gap:7px;margin:18px 0}.sales-periods button{padding:10px 16px;border:1px solid #6f3d80;border-radius:7px;min-height:44px}.sales-periods button[aria-pressed=true]{background:#b51b91;border-color:#ff69ce}.sales-layout{display:grid;grid-template-columns:minmax(0,1fr) 265px;gap:25px}.sales-layout>div{min-width:0}.sales-summary{display:flex;align-items:center;justify-content:space-between;gap:15px;margin:15px 0}.sales-summary strong{font-size:26px;color:#ff9bd7}.sales-summary span{font-size:11px;color:#cbb3dc;text-align:right}.sales-chart{width:100%;min-width:0}.sales-data{max-height:230px;overflow:auto}.sales-data p{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #4f2a5e;padding:8px}.calendar-head{display:flex;align-items:center;justify-content:space-between;gap:5px;margin:12px 0}.calendar-head strong{text-transform:capitalize;font-size:13px}.calendar-head button{width:38px;height:38px;display:grid;place-items:center}.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}.calendar-grid small{color:#cdb3de;padding:8px 0}.calendar-grid button{height:36px;border:1px solid #553164;border-radius:6px;position:relative}.calendar-grid button.selected{background:#9e177f;border-color:#ff7bd4}.calendar-grid button i{position:absolute;bottom:3px;left:calc(50% - 2px);width:4px;height:4px;border-radius:50%;background:#59eee0}.sales-calendar>.muted{margin-top:16px}.sales-dashboard>p.muted{margin-top:22px}
 @media(max-width:1100px){.sales-layout{grid-template-columns:1fr}.sales-calendar{max-width:360px}}
 @media(max-width:760px){.stock-cards{grid-template-columns:1fr}.stock-card-heading img{width:72px;height:90px}.sales-summary{align-items:flex-start;flex-direction:column}.sales-summary span{text-align:left}.sales-summary strong{font-size:23px}.product-admin-actions{width:100%;padding-left:58px}.sales-periods button{flex:1;padding:10px}.sales-date{width:100%}}
+
+/* Product photo upload: native gallery picker and touch-friendly controls. */
+.product-photo-editor{margin:0;padding:18px;border:1px solid #754285;border-radius:10px;min-width:0}
+.product-photo-editor legend{padding:0 8px;color:#f5e9ff;font-size:13px}
+.product-photo-preview{display:grid;place-items:center;height:220px;background:#12091d;border:1px solid #4d2a5a;border-radius:8px;overflow:hidden;margin-bottom:14px}
+.product-photo-preview img{width:100%;height:100%;object-fit:contain}
+.product-photo-preview span{font-size:12px;color:#ceb5db}
+.photo-choose{width:100%;justify-content:center;min-height:48px;gap:12px}
+.photo-help,.photo-feedback,.photo-error{font-size:12px;line-height:1.6;margin-top:10px}
+.photo-help{color:#cbb3db}.photo-feedback{color:#7de9dc}.photo-feedback:empty{display:none}.photo-error{color:#ffc2dc}
+.photo-link-option{margin-top:14px;padding:0;border:0}.photo-link-option summary{min-height:44px;font-size:12px}
+.photo-link-option label{display:flex;flex-direction:column;gap:8px;font-size:12px}.photo-link-option input{width:100%}
+.photo-spinner{animation:photo-spin 1s linear infinite}@keyframes photo-spin{to{transform:rotate(360deg)}}
+.edit-dialog{overscroll-behavior:contain;max-height:90dvh}
+@media(max-width:900px){.edit-dialog .settings-form input:not([type=checkbox]){font-size:16px}.product-photo-editor{padding:12px}.product-photo-preview{height:190px}.edit-dialog .modal-header .icon{min-height:44px;min-width:44px}.edit-dialog{max-height:93dvh}}
+@media(prefers-reduced-motion:reduce){.photo-spinner{animation:none}}
