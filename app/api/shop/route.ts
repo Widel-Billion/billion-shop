@@ -19,7 +19,7 @@ export async function GET(r:Request){
   const stmt=isAdmin?db.prepare("SELECT data FROM records WHERE kind='order' ORDER BY rowid DESC"):db.prepare("SELECT data FROM records WHERE kind='order' AND owner=? ORDER BY rowid DESC").bind(owner||'none');
   const rows=await stmt.all<{data:string}>();
   const movements=isAdmin?(await db.prepare('SELECT m.*,i.product_id,i.size,i.color FROM stock_movements m JOIN inventory i ON i.id=m.variant_id ORDER BY m.rowid DESC LIMIT 100').all()).results:[];
-  return json({products:(await getProducts(db)).filter(p=>isAdmin||p.published).map(p=>{if(!isAdmin)delete p.archivedVariants;return p;}),settings:await getSettings(db),orders:rows.results.map(v=>{const order=JSON.parse(v.data);if(!isAdmin)delete order.notes;return order;}),movements,admin:isAdmin,user:owner?{email:r.headers.get('oai-authenticated-user-email')}:null});
+  return json({products:(await getProducts(db)).filter(p=>isAdmin||p.published).map(p=>{if(!isAdmin)delete p.archivedVariants;return p;}),settings:await getSettings(db),orders:rows.results.map(v=>{const order=JSON.parse(v.data);if(!isAdmin)delete order.notes;return order;}),movements,admin:isAdmin,user:owner?{id:owner,email:r.headers.get('oai-authenticated-user-email')||''}:null});
  }catch{return json({error:'Le service est temporairement indisponible. Réessayez dans un instant.'},503);}
 }
 export async function POST(r:Request){

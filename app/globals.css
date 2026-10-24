@@ -332,3 +332,14 @@ footer{background:#0b0714;color:#f9f0ff}
 .edit-dialog{overscroll-behavior:contain;max-height:90dvh}
 @media(max-width:900px){.edit-dialog .settings-form input:not([type=checkbox]){font-size:16px}.product-photo-editor{padding:12px}.product-photo-preview{height:190px}.edit-dialog .modal-header .icon{min-height:44px;min-width:44px}.edit-dialog{max-height:93dvh}}
 @media(prefers-reduced-motion:reduce){.photo-spinner{animation:none}}
+
+/* Access gates are shared by direct navigation and session revalidation. */
+.admin-access-page{min-height:100dvh;padding:36px 5%;background:#10091d;color:#f8edff}
+.admin-access-brand{display:block;font-family:Georgia,serif;font-size:23px;letter-spacing:2px;text-align:center;margin-bottom:48px}
+.admin-access-card{max-width:550px;margin:0 auto;padding:36px;background:#1b0e2c;border:1px solid #6b367e;border-radius:14px;display:flex;flex-direction:column;align-items:flex-start;gap:22px}
+.admin-access-card>svg{color:#f17bcd}.admin-access-card h1{font-size:32px;letter-spacing:-.5px;line-height:1.2}.admin-access-card>p:not(.eyebrow){font-size:14px;color:#dbc9e7}
+.admin-access-card .button{white-space:normal;text-align:center;justify-content:center;min-height:48px}
+.admin-access-card .text-link{white-space:normal;line-height:1.7;min-height:44px}
+.admin-access-return{display:inline-flex;align-items:center;gap:9px;min-height:44px;font-size:13px;color:#dbc9e7}
+.footer-admin-link{display:flex;align-items:center;gap:8px;font-size:11px;color:#d6bfdf;margin-bottom:14px;min-height:36px}
+@media(max-width:760px){.admin-access-page{padding:24px 5%}.admin-access-brand{margin-bottom:30px}.admin-access-card{padding:25px 20px}.admin-access-card h1{font-size:28px}.admin-access-card .button{width:100%;font-size:10px;padding:15px}.footer-admin-link{font-size:10px}}
